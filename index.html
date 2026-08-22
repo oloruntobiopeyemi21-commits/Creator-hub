@@ -193,7 +193,7 @@
     </div>
 
     <div class="waitlist" id="join">
-      <form id="waitlistForm">
+      <form id="waitlistForm" action="https://formspree.io/f/xwlezyae" method="POST">
         <input type="email" name="email" placeholder="you@example.com" required>
         <button type="submit">Get early access</button>
       </form>
@@ -277,7 +277,7 @@
     <p class="sub" style="max-width:500px;">Early sign-ups get the current free-tier limits locked in permanently, even after we grow.</p>
 
     <div class="waitlist">
-      <form id="waitlistForm2">
+      <form id="waitlistForm2" action="https://formspree.io/f/xwlezyae" method="POST">
         <input type="email" name="email" placeholder="you@example.com" required>
         <button type="submit">Get early access</button>
       </form>
@@ -389,14 +389,21 @@
     const success = document.getElementById(successId);
     form.addEventListener('submit', function(e){
       e.preventDefault();
-      const email = form.querySelector('input[type=email]').value;
-      try{
-        const list = JSON.parse(localStorage.getItem('creatorhub_waitlist') || '[]');
-        list.push({ email, ts: Date.now() });
-        localStorage.setItem('creatorhub_waitlist', JSON.stringify(list));
-      }catch(err){}
-      form.style.display = 'none';
-      success.style.display = 'block';
+      const data = new FormData(form);
+      fetch(form.action, {
+        method: 'POST',
+        body: data,
+        headers: { 'Accept': 'application/json' }
+      }).then(response => {
+        if (response.ok){
+          form.style.display = 'none';
+          success.style.display = 'block';
+        } else {
+          alert('Something went wrong — please try again.');
+        }
+      }).catch(() => {
+        alert('Something went wrong — please check your connection and try again.');
+      });
     });
   }
   handleWaitlist('waitlistForm', 'successMsg');
