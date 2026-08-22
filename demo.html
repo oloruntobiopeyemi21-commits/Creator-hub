@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Try the builder — Creator Hub</title>
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800;900&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap');
+
+  :root{
+    --bg: #0E1614;
+    --bg-raised: #16211E;
+    --ink: #EAF2EE;
+    --ink-dim: #8FA69C;
+    --line: rgba(234,242,238,0.12);
+    --line-strong: rgba(234,242,238,0.22);
+    --lime: #C6FF3D;
+  }
+  *{ margin:0; padding:0; box-sizing:border-box; }
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:'Inter', sans-serif; -webkit-font-smoothing:antialiased;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 44px 44px;
+    min-height:100vh;
+  }
+  h1,h2,h3{ font-family:'Archivo', sans-serif; font-weight:800; letter-spacing:-0.02em; }
+  .mono{ font-family:'Space Mono', monospace; }
+  a{ color:inherit; }
+  .wrap{ max-width:820px; margin:0 auto; padding:0 24px; }
+
+  nav{
+    position:sticky; top:0; z-index:50;
+    background:rgba(14,22,20,0.9); backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  nav .wrap{ display:flex; align-items:center; justify-content:space-between; height:64px; max-width:1040px; }
+  .logo{ font-family:'Archivo'; font-weight:900; font-size:19px; display:flex; align-items:center; gap:9px; }
+  .logo .sq{ width:11px; height:11px; background:var(--lime); }
+  .back{
+    font-family:'Space Mono'; font-size:13px; color:var(--ink-dim); text-decoration:none;
+  }
+
+  main{ padding:56px 0 100px; }
+  .eyebrow{
+    font-family:'Space Mono'; font-size:12px; color:var(--lime); margin-bottom:16px;
+  }
+  h1{ font-size:clamp(28px,4vw,40px); margin-bottom:14px; }
+  .sub{ color:var(--ink-dim); font-size:15.5px; line-height:1.6; margin-bottom:36px; max-width:560px; }
+
+  .prompt-box{
+    background:var(--bg-raised); border:1px solid var(--line-strong);
+    border-radius:12px; padding:20px;
+  }
+  .prompt-box textarea{
+    width:100%; background:transparent; border:none; color:var(--ink);
+    font-family:'Inter'; font-size:15.5px; line-height:1.6; resize:none;
+    min-height:80px; outline:none;
+  }
+  .prompt-box textarea::placeholder{ color:var(--ink-dim); }
+
+  .chip-row{ display:flex; flex-wrap:wrap; gap:8px; margin:16px 0 0; }
+  .chip{
+    font-family:'Space Mono'; font-size:12px; color:var(--ink-dim);
+    border:1px solid var(--line); padding:7px 12px; border-radius:999px;
+    cursor:pointer; background:none;
+  }
+  .chip:hover{ border-color:var(--lime); color:var(--lime); }
+
+  .generate-btn{
+    margin-top:20px; width:100%;
+    font-family:'Archivo'; font-weight:800; font-size:15px;
+    background:var(--lime); color:#0E1614; border:none;
+    padding:16px; border-radius:8px; cursor:pointer;
+  }
+  .generate-btn:active{ transform:scale(0.99); }
+  .generate-btn:disabled{ opacity:0.6; }
+
+  .status{
+    margin-top:24px; display:none; font-family:'Space Mono'; font-size:13px; color:var(--ink-dim);
+  }
+  .status.show{ display:flex; align-items:center; gap:10px; }
+  .dot{
+    width:7px; height:7px; border-radius:50%; background:var(--lime);
+    animation: pulse 1s ease-in-out infinite;
+  }
+  @keyframes pulse{ 0%,100%{ opacity:0.3; } 50%{ opacity:1; } }
+
+  .result{
+    display:none; margin-top:32px;
+    border:1px solid var(--line-strong); border-radius:12px; overflow:hidden;
+  }
+  .result.show{ display:block; }
+  .result-bar{
+    background:var(--bg-raised); padding:10px 16px;
+    display:flex; align-items:center; gap:8px;
+    border-bottom:1px solid var(--line);
+    font-family:'Space Mono'; font-size:11px; color:var(--ink-dim);
+  }
+  .result-bar .traffic{ display:flex; gap:5px; margin-right:6px; }
+  .result-bar .traffic span{ width:8px; height:8px; border-radius:50%; background:var(--line-strong); }
+  .result-frame{ background:#fff; }
+  .result-frame iframe{
+    width:100%; height:460px; border:none; display:block;
+  }
+
+  .note{
+    margin-top:20px; font-size:13px; color:var(--ink-dim); line-height:1.6;
+  }
+  .note strong{ color:var(--lime); }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <div class="logo"><span class="sq"></span>Creator Hub</div>
+    <a href="index.html" class="back">&larr; Back home</a>
+  </div>
+</nav>
+
+<main>
+  <div class="wrap">
+    <div class="eyebrow">▸ Live demo</div>
+    <h1>Describe a site. Watch it come together.</h1>
+    <p class="sub">This is a preview of how Creator Hub will work. Type what you want to build, or tap one of the examples below, and see a generated result.</p>
+
+    <div class="prompt-box">
+      <textarea id="promptInput" placeholder="e.g. A landing page for a local bakery with a menu section and contact form"></textarea>
+      <div class="chip-row">
+        <button class="chip" data-prompt="A portfolio site for a photographer">Photographer portfolio</button>
+        <button class="chip" data-prompt="A landing page for a local bakery">Bakery landing page</button>
+        <button class="chip" data-prompt="A one-page site for a fitness coach">Fitness coach site</button>
+      </div>
+    </div>
+
+    <button class="generate-btn" id="generateBtn">Generate site</button>
+
+    <div class="status" id="statusMsg">
+      <span class="dot"></span>
+      <span id="statusText">Generating your site...</span>
+    </div>
+
+    <div class="result" id="resultBox">
+      <div class="result-bar">
+        <div class="traffic"><span></span><span></span><span></span></div>
+        <span>preview.creatorhub.app</span>
+      </div>
+      <div class="result-frame">
+        <iframe id="resultFrame"></iframe>
+      </div>
+    </div>
+
+    <p class="note">This demo shows a sample result to illustrate the experience. <strong>Real AI-generated output</strong> — matched precisely to what you type — is coming as we build out the full platform.</p>
+  </div>
+</main>
+
+<script>
+  const promptInput = document.getElementById('promptInput');
+  const generateBtn = document.getElementById('generateBtn');
+  const statusMsg = document.getElementById('statusMsg');
+  const statusText = document.getElementById('statusText');
+  const resultBox = document.getElementById('resultBox');
+  const resultFrame = document.getElementById('resultFrame');
+
+  document.querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      promptInput.value = chip.dataset.prompt;
+      promptInput.focus();
+    });
+  });
+
+  function sampleSiteHTML(prompt){
+    const p = prompt.toLowerCase();
+    let title = "Your New Site";
+    let tagline = "Built with Creator Hub";
+    let accent = "#C6FF3D";
+
+    if (p.includes('bak')){
+      title = "Golden Crust Bakery";
+      tagline = "Fresh bread and pastries, baked daily";
+      accent = "#E8A33D";
+    } else if (p.includes('photo')){
+      title = "Frame & Light Studio";
+      tagline = "Photography that tells your story";
+      accent = "#8FA69C";
+    } else if (p.includes('fit') || p.includes('coach')){
+      title = "Peak Form Coaching";
+      tagline = "Train smarter. Move better.";
+      accent = "#FF6B35";
+    }
+
+    return `
+      <html>
+      <head><style>
+        body{ font-family: -apple-system, sans-serif; margin:0; color:#1a1a1a; }
+        .hero{ padding:60px 32px; background:#fafafa; text-align:center; }
+        .hero h1{ font-size:32px; margin:0 0 10px; }
+        .hero p{ color:#666; font-size:16px; margin:0 0 24px; }
+        .btn{ display:inline-block; background:${accent}; color:#111; font-weight:700; padding:12px 28px; border-radius:8px; text-decoration:none; font-family:sans-serif; }
+        .section{ padding:40px 32px; }
+        .cards{ display:flex; gap:16px; flex-wrap:wrap; }
+        .card{ flex:1; min-width:140px; background:#f2f2f2; border-radius:10px; padding:20px; }
+      </style></head>
+      <body>
+        <div class="hero">
+          <h1>${title}</h1>
+          <p>${tagline}</p>
+          <a class="btn" href="#">Get Started</a>
+        </div>
+        <div class="section">
+          <div class="cards">
+            <div class="card"><strong>Section 1</strong><p style="color:#777;font-size:13px;">Sample content block</p></div>
+            <div class="card"><strong>Section 2</strong><p style="color:#777;font-size:13px;">Sample content block</p></div>
+            <div class="card"><strong>Section 3</strong><p style="color:#777;font-size:13px;">Sample content block</p></div>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+  }
+
+  generateBtn.addEventListener('click', () => {
+    const prompt = promptInput.value.trim();
+    if (!prompt){
+      promptInput.focus();
+      return;
+    }
+
+    generateBtn.disabled = true;
+    resultBox.classList.remove('show');
+    statusMsg.classList.add('show');
+
+    const steps = ['Reading your prompt...', 'Choosing layout...', 'Writing content...', 'Finalizing site...'];
+    let i = 0;
+    statusText.textContent = steps[0];
+    const interval = setInterval(() => {
+      i++;
+      if (i < steps.length){
+        statusText.textContent = steps[i];
+      }
+    }, 550);
+
+    setTimeout(() => {
+      clearInterval(interval);
+      statusMsg.classList.remove('show');
+      resultFrame.srcdoc = sampleSiteHTML(prompt);
+      resultBox.classList.add('show');
+      generateBtn.disabled = false;
+    }, 2400);
+  });
+</script>
+
+</body>
+</html>
