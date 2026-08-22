@@ -69,7 +69,12 @@
     padding:9px 16px; border-radius:4px; text-decoration:none;
   }
 
-  .hero{ padding:80px 0 56px; }
+  .hero{ padding:80px 0 56px; position:relative; overflow:hidden; }
+  #hero3d{
+    position:absolute; inset:0; z-index:0; opacity:0.55;
+    pointer-events:none;
+  }
+  .hero .wrap{ position:relative; z-index:1; }
   .eyebrow{
     display:inline-flex; align-items:center; gap:8px;
     font-family:'Space Mono'; font-size:12px; color:var(--lime);
@@ -174,6 +179,7 @@
 </nav>
 
 <header class="hero">
+  <div id="hero3d"></div>
   <div class="wrap">
     <div class="eyebrow">▸ Free plan built to stay free</div>
     <h1>Build your app or site.<br>The free plan <span class="accent">actually works.</span></h1>
@@ -287,7 +293,97 @@
   </div>
 </footer>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
+  // ---------- 3D floating build-blocks in hero ----------
+  (function initHero3D(){
+    if (typeof THREE === 'undefined') return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    const container = document.getElementById('hero3d');
+    if (!container) return;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 0.1, 100);
+    camera.position.z = 9;
+
+    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    container.appendChild(renderer.domElement);
+
+    const limeColor = 0xC6FF3D;
+    const lineColor = 0x8FA69C;
+
+    const group = new THREE.Group();
+    scene.add(group);
+
+    const cubes = [];
+    const cubeCount = 9;
+    for (let i = 0; i < cubeCount; i++){
+      const size = 0.6 + Math.random() * 1.1;
+      const geo = new THREE.BoxGeometry(size, size, size);
+      const edges = new THREE.EdgesGeometry(geo);
+      const isAccent = i % 4 === 0;
+      const mat = new THREE.LineBasicMaterial({
+        color: isAccent ? limeColor : lineColor,
+        transparent: true,
+        opacity: isAccent ? 0.9 : 0.35
+      });
+      const cube = new THREE.LineSegments(edges, mat);
+
+      cube.position.set(
+        (Math.random() - 0.5) * 12,
+        (Math.random() - 0.5) * 7,
+        (Math.random() - 0.5) * 6 - 2
+      );
+      cube.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
+
+      cube.userData.rotSpeed = {
+        x: (Math.random() - 0.5) * 0.006,
+        y: (Math.random() - 0.5) * 0.008
+      };
+      cube.userData.floatSpeed = 0.3 + Math.random() * 0.4;
+      cube.userData.floatOffset = Math.random() * Math.PI * 2;
+      cube.userData.baseY = cube.position.y;
+
+      group.add(cube);
+      cubes.push(cube);
+    }
+
+    let mouseX = 0, mouseY = 0;
+    window.addEventListener('mousemove', (e) => {
+      mouseX = (e.clientX / window.innerWidth - 0.5);
+      mouseY = (e.clientY / window.innerHeight - 0.5);
+    });
+
+    const clock = new THREE.Clock();
+
+    function animate(){
+      requestAnimationFrame(animate);
+      const t = clock.getElapsedTime();
+
+      cubes.forEach(cube => {
+        cube.rotation.x += cube.userData.rotSpeed.x;
+        cube.rotation.y += cube.userData.rotSpeed.y;
+        cube.position.y = cube.userData.baseY + Math.sin(t * cube.userData.floatSpeed + cube.userData.floatOffset) * 0.3;
+      });
+
+      group.rotation.y += ((mouseX * 0.3) - group.rotation.y) * 0.02;
+      group.rotation.x += ((-mouseY * 0.15) - group.rotation.x) * 0.02;
+
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    window.addEventListener('resize', () => {
+      if (!container.clientWidth) return;
+      camera.aspect = container.clientWidth / container.clientHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(container.clientWidth, container.clientHeight);
+    });
+  })();
+
   function handleWaitlist(formId, successId){
     const form = document.getElementById(formId);
     const success = document.getElementById(successId);
