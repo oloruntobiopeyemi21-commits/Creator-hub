@@ -413,6 +413,30 @@
   handleWaitlist('waitlistForm', 'successMsg');
   handleWaitlist('waitlistForm2', 'successMsg2');
 </script>
+<script>
+  // Function to call your Vercel backend API
+  async function generateContent(userPrompt) {
+    try {
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: userPrompt })
+      });
+      
+      const data = await response.json();
+      
+      if (data.choices && data.choices[0]) {
+        return data.choices[0].message.content;
+      } else {
+        console.error('API Error:', data);
+        return 'Error generating response.';
+      }
+    } catch (err) {
+      console.error('Network Error:', err);
+      return 'Failed to connect to the server.';
+    }
+  }
+</script>
 
 </body>
 </html>
