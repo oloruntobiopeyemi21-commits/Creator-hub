@@ -1,442 +1,159 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Creator Hub — Build your app or site, free stays free</title>
-<meta name="description" content="A build platform that gives you more on the free plan — more projects, more storage, no forced upgrade just to launch.">
-<meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Creator Hub</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
 
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800;900&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap');
+    :root {
+      --bg: #0E1614;
+      --bg-raised: #16211E;
+      --ink: #EAF2EE;
+      --ink-dim: #8FA69C;
+      --line: rgba(234,242,238,0.12);
+      --lime: #C6FF3D;
+    }
 
-  :root{
-    --bg: #0E1614;
-    --bg-raised: #16211E;
-    --ink: #EAF2EE;
-    --ink-dim: #8FA69C;
-    --line: rgba(234,242,238,0.12);
-    --line-strong: rgba(234,242,238,0.22);
-    --lime: #C6FF3D;
-    --orange: #FF6B35;
-  }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
 
-  *{ margin:0; padding:0; box-sizing:border-box; }
-  html{ scroll-behavior:smooth; }
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
 
-  body{
-    background:var(--bg);
-    color:var(--ink);
-    font-family:'Inter', sans-serif;
-    -webkit-font-smoothing:antialiased;
-    background-image:
-      linear-gradient(var(--line) 1px, transparent 1px),
-      linear-gradient(90deg, var(--line) 1px, transparent 1px);
-    background-size: 44px 44px;
-    overflow-x:hidden;
-  }
+    .container {
+      width: 100%;
+      max-width: 650px;
+      background: var(--bg-raised);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 32px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    }
 
-  @media (prefers-reduced-motion: reduce){
-    *{ animation-duration:0.01ms !important; transition-duration:0.01ms !important; scroll-behavior:auto !important; }
-  }
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
 
-  h1,h2,h3{ font-family:'Archivo', sans-serif; font-weight:800; letter-spacing:-0.02em; }
-  .mono{ font-family:'Space Mono', monospace; }
-  a{ color:inherit; }
+    p.subtitle {
+      color: var(--ink-dim);
+      font-size: 14px;
+      margin-bottom: 24px;
+    }
 
-  .wrap{ max-width:1040px; margin:0 auto; padding:0 24px; }
+    textarea {
+      width: 100%;
+      height: 120px;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 16px;
+      color: var(--ink);
+      font-family: inherit;
+      font-size: 15px;
+      resize: vertical;
+      outline: none;
+      margin-bottom: 16px;
+    }
 
-  .crosshair{
-    position:fixed; width:18px; height:18px; pointer-events:none; z-index:40; opacity:0.5;
-  }
-  .crosshair::before, .crosshair::after{ content:''; position:absolute; background:var(--lime); }
-  .crosshair::before{ width:18px; height:1px; top:8px; left:0; }
-  .crosshair::after{ width:1px; height:18px; left:8px; top:0; }
-  .tl{ top:16px; left:16px; }
-  .tr{ top:16px; right:16px; }
+    textarea:focus {
+      border-color: var(--lime);
+    }
 
-  nav{
-    position:sticky; top:0; z-index:50;
-    background:rgba(14,22,20,0.9);
-    backdrop-filter:blur(10px);
-    border-bottom:1px solid var(--line);
-  }
-  nav .wrap{ display:flex; align-items:center; justify-content:space-between; height:64px; }
-  .logo{ font-family:'Archivo'; font-weight:900; font-size:19px; display:flex; align-items:center; gap:9px; }
-  .logo .sq{ width:11px; height:11px; background:var(--lime); }
-  .nav-cta{
-    font-family:'Space Mono'; font-weight:700; font-size:13px;
-    border:1px solid var(--line-strong); color:var(--ink);
-    padding:9px 16px; border-radius:4px; text-decoration:none;
-  }
+    button {
+      width: 100%;
+      background: var(--lime);
+      color: #000;
+      border: none;
+      padding: 14px 20px;
+      font-size: 15px;
+      font-weight: 600;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
 
-  .hero{ padding:80px 0 56px; position:relative; overflow:hidden; }
-  #hero3d{
-    position:absolute; inset:0; z-index:0; opacity:0.55;
-    pointer-events:none;
-  }
-  .hero .wrap{ position:relative; z-index:1; }
-  .eyebrow{
-    display:inline-flex; align-items:center; gap:8px;
-    font-family:'Space Mono'; font-size:12px; color:var(--lime);
-    margin-bottom:22px;
-    border:1px solid rgba(198,255,61,0.3);
-    padding:6px 12px; border-radius:4px;
-    background:rgba(198,255,61,0.06);
-  }
-  .hero h1{
-    font-size:clamp(36px,6vw,62px); line-height:1.05; max-width:760px;
-  }
-  .hero h1 .accent{ color:var(--lime); }
-  .hero p.lead{
-    margin-top:22px; font-size:clamp(16px,2vw,18px); color:var(--ink-dim);
-    max-width:540px; line-height:1.65;
-  }
+    button:hover { opacity: 0.9; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
 
-  .tag-row{ display:flex; flex-wrap:wrap; gap:10px; margin-top:30px; }
-  .tag{
-    font-family:'Space Mono'; font-size:12px; color:var(--ink-dim);
-    border:1px solid var(--line); padding:7px 13px; border-radius:4px;
-  }
+    .output-box {
+      margin-top: 24px;
+      padding: 20px;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      min-height: 80px;
+      color: var(--ink-dim);
+      font-size: 15px;
+      white-space: pre-wrap;
+      display: none;
+    }
 
-  .waitlist{ margin-top:38px; max-width:480px; }
-  .waitlist form{ display:flex; gap:10px; flex-wrap:wrap; }
-  .waitlist input[type=email]{
-    flex:1; min-width:220px;
-    background:var(--bg-raised); border:1px solid var(--line);
-    color:var(--ink); padding:15px 16px; border-radius:6px;
-    font-family:'Inter'; font-size:15px; outline:none;
-  }
-  .waitlist input[type=email]:focus{ border-color:var(--lime); }
-  .waitlist button{
-    font-family:'Archivo'; font-weight:800; font-size:15px;
-    background:var(--lime); color:#0E1614; border:none;
-    padding:15px 22px; border-radius:6px; cursor:pointer;
-  }
-  .waitlist button:active{ transform:scale(0.97); }
-  .waitlist .note{ margin-top:12px; font-size:13px; color:var(--ink-dim); }
-  .waitlist .success{
-    display:none; margin-top:14px; font-size:14px; color:var(--lime); font-family:'Space Mono';
-  }
-
-  .divider{ height:1px; background:var(--line); }
-
-  section{ padding:80px 0; }
-  .section-label{ font-family:'Space Mono'; font-size:12px; color:var(--lime); margin-bottom:14px; }
-  section h2{ font-size:clamp(26px,4vw,38px); max-width:620px; line-height:1.18; margin-bottom:18px; }
-  section > .wrap > p.sub{ color:var(--ink-dim); max-width:560px; font-size:15.5px; line-height:1.65; margin-bottom:48px; }
-
-  .compare{
-    border:1px solid var(--line-strong); border-radius:10px; overflow:hidden;
-  }
-  .compare-row{
-    display:grid; grid-template-columns:1.4fr 1fr 1fr;
-    border-bottom:1px solid var(--line);
-  }
-  .compare-row:last-child{ border-bottom:none; }
-  .compare-row > div{ padding:16px 18px; font-size:14px; }
-  .compare-row.head{ background:var(--bg-raised); font-family:'Space Mono'; font-size:12px; color:var(--ink-dim); }
-  .compare-row .feature{ color:var(--ink); }
-  .compare-row .other{ color:var(--ink-dim); }
-  .compare-row .us{ color:var(--lime); font-family:'Space Mono'; font-weight:700; }
-  @media (max-width:600px){
-    .compare-row{ grid-template-columns:1.2fr 1fr 1fr; }
-    .compare-row > div{ padding:12px; font-size:12.5px; }
-  }
-
-  .grid-3{ display:grid; grid-template-columns:repeat(3,1fr); gap:18px; }
-  @media (max-width:800px){ .grid-3{ grid-template-columns:1fr; } }
-  .card{
-    border:1px solid var(--line); border-radius:10px; padding:24px;
-    background:var(--bg-raised);
-  }
-  .card .num{ font-family:'Space Mono'; color:var(--lime); font-size:13px; margin-bottom:12px; display:block; }
-  .card h3{ font-size:18px; margin-bottom:9px; }
-  .card p{ color:var(--ink-dim); font-size:14px; line-height:1.6; }
-
-  .final{ text-align:center; padding:88px 0 110px; }
-  .final h2{ margin:0 auto 16px; max-width:600px; }
-  .final p.sub{ margin:0 auto 36px !important; }
-  .final .waitlist{ margin-left:auto; margin-right:auto; }
-  .final form{ justify-content:center; }
-
-  footer{ border-top:1px solid var(--line); padding:28px 0; }
-  footer .wrap{
-    display:flex; justify-content:space-between; align-items:center;
-    font-size:13px; color:var(--ink-dim); flex-wrap:wrap; gap:12px;
-  }
-</style>
+    .output-box.active {
+      display: block;
+      color: var(--ink);
+    }
+  </style>
 </head>
 <body>
 
-<div class="crosshair tl"></div>
-<div class="crosshair tr"></div>
+  <div class="container">
+    <h1>Creator Hub</h1>
+    <p class="subtitle">Generate content using OpenRouter & Claude Sonnet 3.5</p>
 
-<nav>
-  <div class="wrap">
-    <div class="logo"><span class="sq"></span>Creator Hub</div>
-    <a href="demo.html" class="back-link" style="font-family:'Space Mono'; font-size:13px; color:var(--ink-dim); text-decoration:none; margin-right:14px;">Try demo</a>
-    <a href="#join" class="nav-cta">Join waitlist</a>
+    <textarea id="promptInput" placeholder="Enter your prompt here..."></textarea>
+    <button id="generateBtn" onclick="generateContent()">Generate Content</button>
+
+    <div id="resultBox" class="output-box"></div>
   </div>
-</nav>
 
-<header class="hero">
-  <div id="hero3d"></div>
-  <div class="wrap">
-    <div class="eyebrow">▸ Free plan built to stay free</div>
-    <h1>Build your app or site.<br>The free plan <span class="accent">actually works.</span></h1>
-    <p class="lead">Creator Hub is a no-code build platform where the free tier isn't a trap — more projects, more storage, no watermark, no forced upgrade just to launch something real.</p>
+  <script>
+    async function generateContent() {
+      const input = document.getElementById('promptInput');
+      const btn = document.getElementById('generateBtn');
+      const resultBox = document.getElementById('resultBox');
 
-    <div class="tag-row">
-      <div class="tag">Websites</div>
-      <div class="tag">Web Apps</div>
-      <div class="tag">No Code</div>
-      <div class="tag">Free Hosting</div>
-    </div>
+      const promptText = input.value.trim();
+      if (!promptText) return;
 
-    <div class="waitlist" id="join">
-      <form id="waitlistForm" action="https://formspree.io/f/xwlezyae" method="POST">
-        <input type="email" name="email" placeholder="you@example.com" required>
-        <button type="submit">Get early access</button>
-      </form>
-      <div class="note">First 50 builders get free-tier limits locked in for life. By joining, you agree to our <a href="privacy.html" style="color:var(--lime);">Privacy Policy</a>.</div>
-      <div class="success" id="successMsg">✓ You're on the list. We'll be in touch.</div>
-    </div>
-  </div>
-</header>
+      btn.disabled = true;
+      btn.innerText = "Generating...";
+      resultBox.style.display = "block";
+      resultBox.innerText = "Thinking...";
 
-<div class="divider"></div>
+      try {
+        const response = await fetch('/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: promptText })
+        });
 
-<section>
-  <div class="wrap">
-    <div class="section-label">The free plan, compared</div>
-    <h2>Most builders make "free" feel like a trial. We didn't.</h2>
-    <p class="sub">No hidden project caps, no forced watermark, no countdown to a paywall. Here's what free actually means, side by side.</p>
+        const data = await response.json();
 
-    <div class="compare">
-      <div class="compare-row head">
-        <div>Feature</div>
-        <div>Typical free plan</div>
-        <div>Creator Hub free</div>
-      </div>
-      <div class="compare-row">
-        <div class="feature">Live projects</div>
-        <div class="other">1 project</div>
-        <div class="us">5 projects</div>
-      </div>
-      <div class="compare-row">
-        <div class="feature">Storage</div>
-        <div class="other">100 MB</div>
-        <div class="us">2 GB</div>
-      </div>
-      <div class="compare-row">
-        <div class="feature">Branding watermark</div>
-        <div class="other">Forced</div>
-        <div class="us">Optional</div>
-      </div>
-      <div class="compare-row">
-        <div class="feature">Custom domain</div>
-        <div class="other">Paid only</div>
-        <div class="us">Included</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<div class="divider"></div>
-
-<section>
-  <div class="wrap">
-    <div class="section-label">Built for real builders</div>
-    <h2>Whoever you're building for, start free — stay free.</h2>
-
-    <div class="grid-3">
-      <div class="card">
-        <span class="num">01</span>
-        <h3>First-time founders</h3>
-        <p>Get a real, working site or app live without needing to hire a developer or learn to code first.</p>
-      </div>
-      <div class="card">
-        <span class="num">02</span>
-        <h3>Side-project builders</h3>
-        <p>Test an idea properly on the free tier — enough room to actually launch, not just a demo you can't ship.</p>
-      </div>
-      <div class="card">
-        <span class="num">03</span>
-        <h3>Small businesses</h3>
-        <p>Get online with a real domain and enough storage to run a proper site, without a monthly bill on day one.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<div class="divider"></div>
-
-<section class="final">
-  <div class="wrap">
-    <div class="section-label" style="text-align:center;">Early access</div>
-    <h2>Be one of the first 50 builders on Creator Hub.</h2>
-    <p class="sub" style="max-width:500px;">Early sign-ups get the current free-tier limits locked in permanently, even after we grow.</p>
-
-    <div class="waitlist">
-      <form id="waitlistForm2" action="https://formspree.io/f/xwlezyae" method="POST">
-        <input type="email" name="email" placeholder="you@example.com" required>
-        <button type="submit">Get early access</button>
-      </form>
-      <div class="success" id="successMsg2">✓ You're on the list. We'll be in touch.</div>
-    </div>
-  </div>
-</section>
-
-<footer>
-  <div class="wrap">
-    <div>Creator Hub — build platform, generous by default.</div>
-    <a href="privacy.html" style="color:var(--ink-dim); text-decoration:underline;">Privacy Policy</a>
-    <div class="mono">© 2026</div>
-  </div>
-</footer>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script>
-  // ---------- 3D floating build-blocks in hero ----------
-  (function initHero3D(){
-    if (typeof THREE === 'undefined') return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
-    const container = document.getElementById('hero3d');
-    if (!container) return;
-
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 0.1, 100);
-    camera.position.z = 9;
-
-    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setSize(container.clientWidth, container.clientHeight);
-    container.appendChild(renderer.domElement);
-
-    const limeColor = 0xC6FF3D;
-    const lineColor = 0x8FA69C;
-
-    const group = new THREE.Group();
-    scene.add(group);
-
-    const cubes = [];
-    const cubeCount = 9;
-    for (let i = 0; i < cubeCount; i++){
-      const size = 0.6 + Math.random() * 1.1;
-      const geo = new THREE.BoxGeometry(size, size, size);
-      const edges = new THREE.EdgesGeometry(geo);
-      const isAccent = i % 4 === 0;
-      const mat = new THREE.LineBasicMaterial({
-        color: isAccent ? limeColor : lineColor,
-        transparent: true,
-        opacity: isAccent ? 0.9 : 0.35
-      });
-      const cube = new THREE.LineSegments(edges, mat);
-
-      cube.position.set(
-        (Math.random() - 0.5) * 12,
-        (Math.random() - 0.5) * 7,
-        (Math.random() - 0.5) * 6 - 2
-      );
-      cube.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
-
-      cube.userData.rotSpeed = {
-        x: (Math.random() - 0.5) * 0.006,
-        y: (Math.random() - 0.5) * 0.008
-      };
-      cube.userData.floatSpeed = 0.3 + Math.random() * 0.4;
-      cube.userData.floatOffset = Math.random() * Math.PI * 2;
-      cube.userData.baseY = cube.position.y;
-
-      group.add(cube);
-      cubes.push(cube);
-    }
-
-    let mouseX = 0, mouseY = 0;
-    window.addEventListener('mousemove', (e) => {
-      mouseX = (e.clientX / window.innerWidth - 0.5);
-      mouseY = (e.clientY / window.innerHeight - 0.5);
-    });
-
-    const clock = new THREE.Clock();
-
-    function animate(){
-      requestAnimationFrame(animate);
-      const t = clock.getElapsedTime();
-
-      cubes.forEach(cube => {
-        cube.rotation.x += cube.userData.rotSpeed.x;
-        cube.rotation.y += cube.userData.rotSpeed.y;
-        cube.position.y = cube.userData.baseY + Math.sin(t * cube.userData.floatSpeed + cube.userData.floatOffset) * 0.3;
-      });
-
-      group.rotation.y += ((mouseX * 0.3) - group.rotation.y) * 0.02;
-      group.rotation.x += ((-mouseY * 0.15) - group.rotation.x) * 0.02;
-
-      renderer.render(scene, camera);
-    }
-    animate();
-
-    window.addEventListener('resize', () => {
-      if (!container.clientWidth) return;
-      camera.aspect = container.clientWidth / container.clientHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(container.clientWidth, container.clientHeight);
-    });
-  })();
-
-  function handleWaitlist(formId, successId){
-    const form = document.getElementById(formId);
-    const success = document.getElementById(successId);
-    form.addEventListener('submit', function(e){
-      e.preventDefault();
-      const data = new FormData(form);
-      fetch(form.action, {
-        method: 'POST',
-        body: data,
-        headers: { 'Accept': 'application/json' }
-      }).then(response => {
-        if (response.ok){
-          form.style.display = 'none';
-          success.style.display = 'block';
+        if (data.choices && data.choices[0]) {
+          resultBox.innerText = data.choices[0].message.content;
         } else {
-          alert('Something went wrong — please try again.');
+          resultBox.innerText = "Error: " + JSON.stringify(data);
         }
-      }).catch(() => {
-        alert('Something went wrong — please check your connection and try again.');
-      });
-    });
-  }
-  handleWaitlist('waitlistForm', 'successMsg');
-  handleWaitlist('waitlistForm2', 'successMsg2');
-</script>
-<script>
-  // Function to call your Vercel backend API
-  async function generateContent(userPrompt) {
-    try {
-      const response = await fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: userPrompt })
-      });
-      
-      const data = await response.json();
-      
-      if (data.choices && data.choices[0]) {
-        return data.choices[0].message.content;
-      } else {
-        console.error('API Error:', data);
-        return 'Error generating response.';
+      } catch (err) {
+        resultBox.innerText = "Network Error: Could not generate response.";
+      } finally {
+        btn.disabled = false;
+        btn.innerText = "Generate Content";
       }
-    } catch (err) {
-      console.error('Network Error:', err);
-      return 'Failed to connect to the server.';
     }
-  }
-</script>
+  </script>
 
 </body>
 </html>
