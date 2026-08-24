@@ -161,6 +161,52 @@
   .final .waitlist{ margin-left:auto; margin-right:auto; }
   .final form{ justify-content:center; }
 
+  .prompt-box{
+    background:var(--bg-raised); border:1px solid var(--line-strong);
+    border-radius:12px; padding:20px; max-width:680px;
+  }
+  .prompt-box textarea{
+    width:100%; background:transparent; border:none; color:var(--ink);
+    font-family:'Inter'; font-size:15.5px; line-height:1.6; resize:none;
+    min-height:80px; outline:none;
+  }
+  .prompt-box textarea::placeholder{ color:var(--ink-dim); }
+
+  #liveGenBtn{ max-width:680px; margin-top:16px; }
+
+  .status{
+    margin-top:24px; display:none; align-items:center; gap:10px;
+    font-family:'Space Mono'; font-size:13px; color:var(--ink-dim);
+  }
+  .status.show{ display:flex; }
+  .status .dot{
+    width:7px; height:7px; border-radius:50%; background:var(--lime);
+    animation: pulse 1s ease-in-out infinite;
+  }
+  @keyframes pulse{ 0%,100%{ opacity:0.3; } 50%{ opacity:1; } }
+
+  .result{
+    display:none; margin-top:24px; max-width:680px;
+    border:1px solid var(--line-strong); border-radius:12px; overflow:hidden;
+  }
+  .result.show{ display:block; }
+  .result-bar{
+    background:var(--bg-raised); padding:10px 16px;
+    display:flex; align-items:center; gap:8px;
+    border-bottom:1px solid var(--line);
+    font-family:'Space Mono'; font-size:11px; color:var(--ink-dim);
+  }
+  .result-bar .traffic{ display:flex; gap:5px; margin-right:6px; }
+  .result-bar .traffic span{ width:8px; height:8px; border-radius:50%; background:var(--line-strong); }
+  .result-frame{ background:#fff; }
+  .result-frame iframe{ width:100%; height:460px; border:none; display:block; }
+
+  .error-note{
+    display:none; margin-top:16px; font-size:14px; color:var(--orange);
+    font-family:'Space Mono';
+  }
+  .error-note.show{ display:block; }
+
   footer{ border-top:1px solid var(--line); padding:28px 0; }
   footer .wrap{
     display:flex; justify-content:space-between; align-items:center;
@@ -268,6 +314,39 @@
         <p>Get online with a real domain and enough storage to run a proper site, without a monthly bill on day one.</p>
       </div>
     </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section id="try-it">
+  <div class="wrap">
+    <div class="section-label">▸ Live, powered by real AI</div>
+    <h2>Try it right now.</h2>
+    <p class="sub">Describe a site. This calls the real Creator Hub engine and generates a working page in seconds.</p>
+
+    <div class="prompt-box">
+      <textarea id="liveGenPrompt" placeholder="e.g. A landing page for a local bakery with a menu section and contact form"></textarea>
+    </div>
+
+    <button class="generate-btn" id="liveGenBtn">Generate site</button>
+
+    <div class="status" id="liveGenStatus">
+      <span class="dot"></span>
+      <span id="liveGenStatusText">Generating your site...</span>
+    </div>
+
+    <div class="result" id="liveGenResult">
+      <div class="result-bar">
+        <div class="traffic"><span></span><span></span><span></span></div>
+        <span>preview.creatorhub.app</span>
+      </div>
+      <div class="result-frame">
+        <iframe id="liveGenFrame"></iframe>
+      </div>
+    </div>
+
+    <div class="error-note" id="liveGenError"></div>
   </div>
 </section>
 
@@ -412,30 +491,57 @@
   }
   handleWaitlist('waitlistForm', 'successMsg');
   handleWaitlist('waitlistForm2', 'successMsg2');
-</script>
-<script>
-  // Function to call your Vercel backend API
-  async function generateContent(userPrompt) {
+
+  // ---------- Live generation, calls your real /api/generate backend ----------
+  const liveGenBtn = document.getElementById('liveGenBtn');
+  const liveGenPrompt = document.getElementById('liveGenPrompt');
+  const liveGenStatus = document.getElementById('liveGenStatus');
+  const liveGenResult = document.getElementById('liveGenResult');
+  const liveGenFrame = document.getElementById('liveGenFrame');
+  const liveGenError = document.getElementById('liveGenError');
+
+  liveGenBtn.addEventListener('click', async () => {
+    const prompt = liveGenPrompt.value.trim();
+    if (!prompt){
+      liveGenPrompt.focus();
+      return;
+    }
+
+    liveGenBtn.disabled = true;
+    liveGenResult.classList.remove('show');
+    liveGenError.classList.remove('show');
+    liveGenStatus.classList.add('show');
+
     try {
       const response = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: userPrompt })
+        body: JSON.stringify({ prompt })
       });
-      
-      const data = await response.json();
-      
-      if (data.choices && data.choices[0]) {
-        return data.choices[0].message.content;
-      } else {
-        console.error('API Error:', data);
-        return 'Error generating response.';
+
+      if (!response.ok){
+        throw new Error('Request failed with status ' + response.status);
       }
+
+      const data = await response.json();
+      // Expects { html: "<!DOCTYPE html>...</html>" } from your backend.
+      // If your route returns a different shape, adjust the line below.
+      const generatedHtml = data.html || data.result || '';
+
+      if (!generatedHtml){
+        throw new Error('No HTML returned from the server.');
+      }
+
+      liveGenFrame.srcdoc = generatedHtml;
+      liveGenResult.classList.add('show');
     } catch (err) {
-      console.error('Network Error:', err);
-      return 'Failed to connect to the server.';
+      liveGenError.textContent = 'Something went wrong generating your site. ' + err.message;
+      liveGenError.classList.add('show');
+    } finally {
+      liveGenStatus.classList.remove('show');
+      liveGenBtn.disabled = false;
     }
-  }
+  });
 </script>
 
 </body>
