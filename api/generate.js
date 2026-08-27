@@ -34,7 +34,9 @@ export default async function handler(req, res) {
     const data = await response.json();
 
     if (!response.ok) {
-      return res.status(response.status).json({ error: data.error?.message || 'OpenRouter request failed' });
+      return res.status(response.status).json({
+        error: `OpenRouter returned ${response.status}: ${JSON.stringify(data)}`
+      });
     }
 
     let html = data.choices?.[0]?.message?.content || '';
