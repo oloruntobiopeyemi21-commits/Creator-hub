@@ -3,7 +3,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { prompt } = req.body;
+  const { prompt, previous_html } = req.body;
 
   if (!prompt || typeof prompt !== 'string') {
     return res.status(400).json({ error: 'Missing prompt' });
@@ -32,7 +32,7 @@ export default async function handler(req, res) {
       });
     }
 
-    // ---- Log this request (best-effort, don't block generation if this fails) ----
+    // ---- Log this request (best-effort) ----
     fetch(`${process.env.SUPABASE_URL}/rest/v1/generation_log`, {
       method: 'POST',
       headers: {
@@ -43,6 +43,22 @@ export default async function handler(req, res) {
       body: JSON.stringify([{ ip }])
     }).catch(() => {});
 
+    // ---- Build messages: fresh generation, or a refinement of existing HTML ----
+    const baseSystemPrompt = "You are an expert website generator. Output ONLY a complete, valid, single-file HTML document (starting with <!DOCTYPE html>). Requirements: include a <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> tag so it works on mobile; use inline <style> with a clean, modern, professional design (good spacing, a cohesive color scheme, readable typography); include realistic, relevant sample content — never generic placeholder text like 'Lorem Ipsum'; structure the page with a clear header/nav, a hero section, at least one content section, and a footer, as appropriate. Do not include any explanation, commentary, markdown formatting, or code fences before or after the HTML — output raw HTML only, nothing else.";
+
+    let messages;
+    if (previous_html && typeof previous_html === 'string') {
+      messages = [
+        { role: "system", content: baseSystemPrompt + " You will be given an existing HTML page and an instruction describing a change to make. Apply the change and return the COMPLETE updated HTML document, not just the changed part." },
+        { role: "user", content: `Here is the current HTML page:\n\n${previous_html}\n\nInstruction: ${prompt}\n\nReturn the complete updated HTML document with this change applied.` }
+      ];
+    } else {
+      messages = [
+        { role: "system", content: baseSystemPrompt },
+        { role: "user", content: prompt }
+      ];
+    }
+
     // ---- Generate ----
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
@@ -52,17 +68,8 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         model: "openrouter/free",
-        max_tokens: 3000,
-        messages: [
-          {
-            role: "system",
-            content: "You are an expert website generator. Given a description, output ONLY a complete, valid, single-file HTML document (starting with <!DOCTYPE html>). Requirements: include a <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> tag so it works on mobile; use inline <style> with a clean, modern, professional design (good spacing, a cohesive color scheme, readable typography); include realistic, relevant sample content for the topic described — never use generic placeholder text like 'Lorem Ipsum' or '[Your text here]'; structure the page with a clear header/nav, a hero section, at least one content section, and a footer, as appropriate to the request. Do not include any explanation, commentary, markdown formatting, or code fences before or after the HTML — output raw HTML only, nothing else."
-          },
-          {
-            role: "user",
-            content: prompt
-          }
-        ]
+        max_tokens: 3500,
+        messages
       })
     });
 
@@ -75,8 +82,6 @@ export default async function handler(req, res) {
     }
 
     let html = data.choices?.[0]?.message?.content || '';
-
-    // Strip markdown code fences if the model wrapped the HTML in them anyway
     html = html.replace(/^```html\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
 
     if (!html){
@@ -88,4 +93,3 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: error.message });
   }
 }
-
