@@ -3,14 +3,17 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { id } = req.query;
+  const { id, slug } = req.query;
 
-  if (!id) {
-    return res.status(400).json({ error: 'Missing id' });
+  if (!id && !slug) {
+    return res.status(400).json({ error: 'Missing id or slug' });
   }
 
   try {
-    const url = `${process.env.SUPABASE_URL}/rest/v1/sites?id=eq.${encodeURIComponent(id)}&select=html,title`;
+    const filter = slug
+      ? `slug=eq.${encodeURIComponent(slug)}`
+      : `id=eq.${encodeURIComponent(id)}`;
+    const url = `${process.env.SUPABASE_URL}/rest/v1/sites?${filter}&select=html,title,slug`;
     const response = await fetch(url, {
       headers: {
         'apikey': process.env.SUPABASE_SERVICE_KEY,
