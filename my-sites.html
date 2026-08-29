@@ -70,13 +70,14 @@
         listEl.innerHTML = data.sites.map(site => {
           const date = new Date(site.created_at).toLocaleDateString(undefined, { month:'short', day:'numeric', year:'numeric' });
           const title = (site.title || site.prompt || 'Untitled site').replace(/</g,'&lt;');
+          const link = site.slug ? ('view.html?s=' + encodeURIComponent(site.slug)) : ('view.html?id=' + site.id);
           return `
             <div class="site-card">
               <div class="info">
                 <div class="title">${title}</div>
                 <div class="date">${date}</div>
               </div>
-              <a class="view" href="view.html?id=${site.id}">View &rarr;</a>
+              <a class="view" href="${link}">View &rarr;</a>
             </div>
           `;
         }).join('');
