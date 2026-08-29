@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Saved Sites — Creator Hub</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Archivo:wght@700;800;900&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap');
+  :root{
+    --bg:#0E1614; --bg-raised:#16211E; --ink:#EAF2EE; --ink-dim:#8FA69C;
+    --line: rgba(234,242,238,0.12); --lime:#C6FF3D;
+  }
+  *{ margin:0; padding:0; box-sizing:border-box; }
+  body{
+    background:var(--bg); color:var(--ink); font-family:'Inter', sans-serif;
+    -webkit-font-smoothing:antialiased; min-height:100vh;
+  }
+  .wrap{ max-width:760px; margin:0 auto; padding:48px 24px 100px; }
+  h1{ font-family:'Archivo'; font-weight:800; font-size:30px; margin-bottom:8px; }
+  p.sub{ color:var(--ink-dim); margin-bottom:36px; }
+  a.back{ color:var(--lime); font-family:'Space Mono'; font-size:13px; text-decoration:none; display:inline-block; margin-bottom:28px; }
+  .site-card{
+    border:1px solid var(--line); border-radius:10px; padding:18px 20px;
+    background:var(--bg-raised); margin-bottom:12px;
+    display:flex; justify-content:space-between; align-items:center; gap:16px;
+  }
+  .site-card .info{ overflow:hidden; }
+  .site-card .title{ font-weight:600; font-size:15px; margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .site-card .date{ font-family:'Space Mono'; font-size:12px; color:var(--ink-dim); }
+  .site-card a.view{
+    font-family:'Space Mono'; font-size:13px; color:var(--lime);
+    border:1px solid rgba(198,255,61,0.3); padding:8px 14px; border-radius:6px;
+    text-decoration:none; white-space:nowrap; flex-shrink:0;
+  }
+  .empty{ color:var(--ink-dim); font-size:15px; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <a class="back" href="index.html">&larr; Back to Creator Hub</a>
+    <h1>My saved sites</h1>
+    <p class="sub">Sites you've generated and saved from this device.</p>
+    <div id="list"></div>
+  </div>
+
+  <script>
+    async function loadSites(){
+      const listEl = document.getElementById('list');
+      const anonId = localStorage.getItem('creatorhub_anon_id');
+
+      if (!anonId){
+        listEl.innerHTML = '<p class="empty">No saved sites yet. Generate one and tap "Save this site."</p>';
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/my-sites?anon_id=' + encodeURIComponent(anonId));
+        const data = await response.json();
+
+        if (!response.ok){
+          listEl.innerHTML = '<p class="empty">Could not load your sites: ' + (data.error || 'unknown error') + '</p>';
+          return;
+        }
+
+        if (!data.sites || data.sites.length === 0){
+          listEl.innerHTML = '<p class="empty">No saved sites yet. Generate one and tap "Save this site."</p>';
+          return;
+        }
+
+        listEl.innerHTML = data.sites.map(site => {
+          const date = new Date(site.created_at).toLocaleDateString(undefined, { month:'short', day:'numeric', year:'numeric' });
+          const title = (site.title || site.prompt || 'Untitled site').replace(/</g,'&lt;');
+          return `
+            <div class="site-card">
+              <div class="info">
+                <div class="title">${title}</div>
+                <div class="date">${date}</div>
+              </div>
+              <a class="view" href="view.html?id=${site.id}">View &rarr;</a>
+            </div>
+          `;
+        }).join('');
+      } catch (err){
+        listEl.innerHTML = '<p class="empty">Could not load your sites: ' + err.message + '</p>';
+      }
+    }
+    loadSites();
+  </script>
+</body>
+</html>
