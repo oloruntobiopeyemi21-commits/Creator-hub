@@ -11,6 +11,17 @@
     border-bottom:1px solid rgba(234,242,238,0.12);
   }
   .bar a{ color:#C6FF3D; font-size:13px; text-decoration:none; font-family:monospace; }
+  .bar button{
+    background:transparent; border:1px solid rgba(198,255,61,0.4); color:#C6FF3D;
+    font-family:monospace; font-size:12px; padding:7px 12px; border-radius:6px; cursor:pointer;
+  }
+  .badge{
+    position:fixed; bottom:16px; right:16px; z-index:50;
+    background:#16211E; border:1px solid rgba(234,242,238,0.15); color:#8FA69C;
+    font-family:monospace; font-size:11px; padding:8px 12px; border-radius:20px;
+    text-decoration:none; display:flex; align-items:center; gap:6px;
+  }
+  .badge span{ color:#C6FF3D; }
   #frame{ width:100%; height:calc(100vh - 52px); border:none; display:block; background:#fff; }
   #msg{ padding:40px 24px; color:#8FA69C; }
 </style>
@@ -18,9 +29,22 @@
 <body>
   <div class="bar">
     <a href="my-sites.html">&larr; Back to my sites</a>
+    <button id="copyBtn" onclick="copyLink()">Copy link</button>
   </div>
   <div id="msg">Loading...</div>
   <iframe id="frame" style="display:none;"></iframe>
+  <a class="badge" href="index.html">Made with <span>Creator Hub</span></a>
+
+  <script>
+    function copyLink(){
+      navigator.clipboard.writeText(window.location.href).then(() => {
+        const btn = document.getElementById('copyBtn');
+        const original = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = original; }, 1500);
+      });
+    }
+  </script>
 
   <script>
     async function loadSite(){
