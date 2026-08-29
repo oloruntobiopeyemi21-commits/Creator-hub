@@ -1,3 +1,31 @@
+function slugify(text) {
+  return (text || 'site')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)+/g, '')
+    .slice(0, 50) || 'site';
+}
+
+async function findUniqueSlug(base) {
+  let candidate = base;
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const checkUrl = `${process.env.SUPABASE_URL}/rest/v1/sites?slug=eq.${encodeURIComponent(candidate)}&select=id`;
+    const checkResponse = await fetch(checkUrl, {
+      headers: {
+        'apikey': process.env.SUPABASE_SERVICE_KEY,
+        'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_KEY}`
+      }
+    });
+    const existing = await checkResponse.json();
+    if (!Array.isArray(existing) || existing.length === 0) {
+      return candidate;
+    }
+    candidate = `${base}-${Math.random().toString(36).slice(2, 6)}`;
+  }
+  return `${base}-${Date.now().toString(36)}`;
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -10,6 +38,10 @@ export default async function handler(req, res) {
   }
 
   try {
+    const finalTitle = (title || prompt || 'Untitled site').slice(0, 80);
+    const baseSlug = slugify(title || prompt || 'site');
+    const slug = await findUniqueSlug(baseSlug);
+
     const response = await fetch(`${process.env.SUPABASE_URL}/rest/v1/sites`, {
       method: 'POST',
       headers: {
@@ -22,7 +54,8 @@ export default async function handler(req, res) {
         user_id: anon_id,
         prompt: prompt || '',
         html,
-        title: (title || prompt || 'Untitled site').slice(0, 80)
+        title: finalTitle,
+        slug
       }])
     });
 
@@ -37,3 +70,4 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: error.message });
   }
 }
+
