@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Viewing saved site — Creator Hub</title>
+<style>
+  body{ margin:0; background:#0E1614; color:#EAF2EE; font-family:'Inter', sans-serif; }
+  .bar{
+    background:#16211E; padding:14px 20px; display:flex; justify-content:space-between; align-items:center;
+    border-bottom:1px solid rgba(234,242,238,0.12);
+  }
+  .bar a{ color:#C6FF3D; font-size:13px; text-decoration:none; font-family:monospace; }
+  #frame{ width:100%; height:calc(100vh - 52px); border:none; display:block; background:#fff; }
+  #msg{ padding:40px 24px; color:#8FA69C; }
+</style>
+</head>
+<body>
+  <div class="bar">
+    <a href="my-sites.html">&larr; Back to my sites</a>
+  </div>
+  <div id="msg">Loading...</div>
+  <iframe id="frame" style="display:none;"></iframe>
+
+  <script>
+    async function loadSite(){
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get('id');
+      const msgEl = document.getElementById('msg');
+      const frameEl = document.getElementById('frame');
+
+      if (!id){
+        msgEl.textContent = 'No site ID given.';
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/get-site?id=' + encodeURIComponent(id));
+        const data = await response.json();
+
+        if (!response.ok){
+          msgEl.textContent = 'Could not load this site: ' + (data.error || 'unknown error');
+          return;
+        }
+
+        document.title = (data.site.title || 'Saved site') + ' — Creator Hub';
+        frameEl.srcdoc = data.site.html;
+        frameEl.style.display = 'block';
+        msgEl.style.display = 'none';
+      } catch (err){
+        msgEl.textContent = 'Could not load this site: ' + err.message;
+      }
+    }
+    loadSite();
+  </script>
+</body>
+</html>
