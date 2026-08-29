@@ -342,7 +342,7 @@
         <span>preview.creatorhub.app</span>
       </div>
       <div class="result-frame">
-        <iframe id="liveGenFrame"></iframe>
+        <iframe id="liveGenFrame" sandbox="allow-scripts"></iframe>
       </div>
     </div>
 
@@ -391,6 +391,7 @@
   <div class="wrap">
     <div>Creator Hub — build platform, generous by default.</div>
     <a href="privacy.html" style="color:var(--ink-dim); text-decoration:underline;">Privacy Policy</a>
+    <a href="terms.html" style="color:var(--ink-dim); text-decoration:underline; margin-left:14px;">Terms</a>
     <div class="mono">© 2026</div>
   </div>
 </footer>
@@ -535,7 +536,8 @@
           html: window._lastGeneratedHtml,
           prompt: window._lastGeneratedPrompt,
           title: nameInput.value.trim(),
-          anon_id: getOrCreateAnonId()
+          anon_id: getOrCreateAnonId(),
+          token: window._lastGenToken
         })
       });
       const data = await response.json();
@@ -601,6 +603,7 @@
         typeof data.remaining === 'number' ? `${data.remaining} free generations left today` : '';
       window._lastGeneratedHtml = generatedHtml;
       window._lastGeneratedPrompt = prompt;
+      window._lastGenToken = data.token || null;
     } catch (err) {
       liveGenError.textContent = 'Something went wrong generating your site. ' + err.message;
       liveGenError.classList.add('show');
@@ -656,6 +659,7 @@
 
       liveGenFrame.srcdoc = newHtml;
       window._lastGeneratedHtml = newHtml;
+      window._lastGenToken = responseData.token || null;
       refineInput.value = '';
       document.getElementById('saveStatus').textContent =
         typeof responseData.remaining === 'number' ? `${responseData.remaining} free generations left today` : '';
