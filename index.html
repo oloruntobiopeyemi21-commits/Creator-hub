@@ -581,7 +581,8 @@
       liveGenFrame.srcdoc = generatedHtml;
       liveGenResult.classList.add('show');
       document.getElementById('saveRow').style.display = 'flex';
-      document.getElementById('saveStatus').textContent = '';
+      document.getElementById('saveStatus').textContent =
+        typeof data.remaining === 'number' ? `${data.remaining} free generations left today` : '';
       window._lastGeneratedHtml = generatedHtml;
       window._lastGeneratedPrompt = prompt;
     } catch (err) {
@@ -596,4 +597,3 @@
 
 </body>
 </html>
-
