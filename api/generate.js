@@ -98,7 +98,7 @@ export default async function handler(req, res) {
     const token = crypto.randomUUID();
     const htmlHash = crypto.createHash('sha256').update(html).digest('hex');
 
-    fetch(`${process.env.SUPABASE_URL}/rest/v1/generation_tokens`, {
+    await fetch(`${process.env.SUPABASE_URL}/rest/v1/generation_tokens`, {
       method: 'POST',
       headers: {
         'apikey': process.env.SUPABASE_SERVICE_KEY,
