@@ -10,7 +10,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const url = `${process.env.SUPABASE_URL}/rest/v1/sites?user_id=eq.${encodeURIComponent(anon_id)}&select=id,title,prompt,created_at&order=created_at.desc`;
+    const url = `${process.env.SUPABASE_URL}/rest/v1/sites?user_id=eq.${encodeURIComponent(anon_id)}&select=id,title,prompt,slug,created_at&order=created_at.desc`;
     const response = await fetch(url, {
       headers: {
         'apikey': process.env.SUPABASE_SERVICE_KEY,
