@@ -346,6 +346,12 @@
       </div>
     </div>
 
+    <div id="saveRow" style="display:none; margin-top:16px; align-items:center; gap:14px; flex-wrap:wrap;">
+      <button class="generate-btn" id="saveSiteBtn" style="width:auto; margin-top:0; padding:12px 22px;">Save this site</button>
+      <span id="saveStatus" style="font-family:'Space Mono'; font-size:13px; color:var(--ink-dim);"></span>
+      <a href="my-sites.html" style="font-family:'Space Mono'; font-size:13px; color:var(--lime); text-decoration:underline;">View my saved sites &rarr;</a>
+    </div>
+
     <div class="error-note" id="liveGenError"></div>
   </div>
 </section>
@@ -492,7 +498,42 @@
   handleWaitlist('waitlistForm', 'successMsg');
   handleWaitlist('waitlistForm2', 'successMsg2');
 
-  // ---------- Live generation, calls your real /api/generate backend ----------
+  function getOrCreateAnonId(){
+    let id = localStorage.getItem('creatorhub_anon_id');
+    if (!id){
+      id = crypto.randomUUID();
+      localStorage.setItem('creatorhub_anon_id', id);
+    }
+    return id;
+  }
+
+  document.getElementById('saveSiteBtn').addEventListener('click', async () => {
+    const statusEl = document.getElementById('saveStatus');
+    const btn = document.getElementById('saveSiteBtn');
+    btn.disabled = true;
+    statusEl.textContent = 'Saving...';
+
+    try {
+      const response = await fetch('/api/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          html: window._lastGeneratedHtml,
+          prompt: window._lastGeneratedPrompt,
+          anon_id: getOrCreateAnonId()
+        })
+      });
+      const data = await response.json();
+      if (!response.ok){
+        throw new Error(data.error || 'Save failed');
+      }
+      statusEl.textContent = '✓ Saved. View it anytime from "My saved sites."';
+    } catch (err){
+      statusEl.textContent = 'Could not save: ' + err.message;
+    } finally {
+      btn.disabled = false;
+    }
+  });
   const liveGenBtn = document.getElementById('liveGenBtn');
   const liveGenPrompt = document.getElementById('liveGenPrompt');
   const liveGenStatus = document.getElementById('liveGenStatus');
@@ -539,6 +580,10 @@
 
       liveGenFrame.srcdoc = generatedHtml;
       liveGenResult.classList.add('show');
+      document.getElementById('saveRow').style.display = 'flex';
+      document.getElementById('saveStatus').textContent = '';
+      window._lastGeneratedHtml = generatedHtml;
+      window._lastGeneratedPrompt = prompt;
     } catch (err) {
       liveGenError.textContent = 'Something went wrong generating your site. ' + err.message;
       liveGenError.classList.add('show');
@@ -551,3 +596,4 @@
 
 </body>
 </html>
+
