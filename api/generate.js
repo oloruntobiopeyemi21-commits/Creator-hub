@@ -1,3 +1,5 @@
+import crypto from 'crypto';
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -43,7 +45,7 @@ export default async function handler(req, res) {
       body: JSON.stringify([{ ip }])
     }).catch(() => {});
 
-    // ---- Build messages: fresh generation, or a refinement of existing HTML ----
+    // ---- Build messages ----
     const baseSystemPrompt = "You are an expert website generator. Output ONLY a complete, valid, single-file HTML document (starting with <!DOCTYPE html>). Requirements: include a <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> tag so it works on mobile; use inline <style> with a clean, modern, professional design (good spacing, a cohesive color scheme, readable typography); include realistic, relevant sample content — never generic placeholder text like 'Lorem Ipsum'; structure the page with a clear header/nav, a hero section, at least one content section, and a footer, as appropriate. Do not include any explanation, commentary, markdown formatting, or code fences before or after the HTML — output raw HTML only, nothing else.";
 
     let messages;
@@ -88,7 +90,25 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'No content returned from the model' });
     }
 
-    return res.status(200).json({ html, remaining: DAILY_LIMIT - usedToday - 1 });
+    if (html.length > 300000) {
+      html = html.slice(0, 300000);
+    }
+
+    // ---- Issue a one-time proof token tied to this exact output ----
+    const token = crypto.randomUUID();
+    const htmlHash = crypto.createHash('sha256').update(html).digest('hex');
+
+    fetch(`${process.env.SUPABASE_URL}/rest/v1/generation_tokens`, {
+      method: 'POST',
+      headers: {
+        'apikey': process.env.SUPABASE_SERVICE_KEY,
+        'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify([{ token, html_hash: htmlHash, used: false }])
+    }).catch(() => {});
+
+    return res.status(200).json({ html, remaining: DAILY_LIMIT - usedToday - 1, token });
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }
