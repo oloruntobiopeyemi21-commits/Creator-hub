@@ -346,10 +346,23 @@
       </div>
     </div>
 
-    <div id="saveRow" style="display:none; margin-top:16px; align-items:center; gap:14px; flex-wrap:wrap;">
-      <button class="generate-btn" id="saveSiteBtn" style="width:auto; margin-top:0; padding:12px 22px;">Save this site</button>
-      <span id="saveStatus" style="font-family:'Space Mono'; font-size:13px; color:var(--ink-dim);"></span>
-      <a href="my-sites.html" style="font-family:'Space Mono'; font-size:13px; color:var(--lime); text-decoration:underline;">View my saved sites &rarr;</a>
+    <div id="saveRow" style="display:none; margin-top:16px;">
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px;">
+        <input type="text" id="siteNameInput" placeholder="Name this site (optional)"
+          style="flex:1; min-width:180px; background:var(--bg-raised); border:1px solid var(--line); color:var(--ink); padding:12px 14px; border-radius:6px; font-family:'Inter'; font-size:14px; outline:none;">
+        <button class="generate-btn" id="saveSiteBtn" style="width:auto; margin-top:0; padding:12px 22px;">Save this site</button>
+        <button class="generate-btn" id="downloadSiteBtn" style="width:auto; margin-top:0; padding:12px 22px; background:transparent; border:1px solid var(--line-strong); color:var(--ink);">Download</button>
+      </div>
+      <div id="saveStatus" style="font-family:'Space Mono'; font-size:13px; color:var(--ink-dim); margin-bottom:16px;"></div>
+
+      <div class="prompt-box" style="max-width:680px;">
+        <textarea id="refinePrompt" placeholder="Want a change? e.g. 'Make the header dark blue' or 'Add a testimonials section'" style="min-height:50px;"></textarea>
+      </div>
+      <button class="generate-btn" id="refineBtn" style="max-width:680px; margin-top:12px;">Refine this site</button>
+
+      <div style="margin-top:14px;">
+        <a href="my-sites.html" style="font-family:'Space Mono'; font-size:13px; color:var(--lime); text-decoration:underline;">View my saved sites &rarr;</a>
+      </div>
     </div>
 
     <div class="error-note" id="liveGenError"></div>
@@ -510,6 +523,7 @@
   document.getElementById('saveSiteBtn').addEventListener('click', async () => {
     const statusEl = document.getElementById('saveStatus');
     const btn = document.getElementById('saveSiteBtn');
+    const nameInput = document.getElementById('siteNameInput');
     btn.disabled = true;
     statusEl.textContent = 'Saving...';
 
@@ -520,6 +534,7 @@
         body: JSON.stringify({
           html: window._lastGeneratedHtml,
           prompt: window._lastGeneratedPrompt,
+          title: nameInput.value.trim(),
           anon_id: getOrCreateAnonId()
         })
       });
@@ -527,7 +542,8 @@
       if (!response.ok){
         throw new Error(data.error || 'Save failed');
       }
-      statusEl.textContent = '✓ Saved. View it anytime from "My saved sites."';
+      const link = data.site.slug ? ('view.html?s=' + data.site.slug) : ('view.html?id=' + data.site.id);
+      statusEl.innerHTML = '✓ Saved. <a href="' + link + '" style="color:var(--lime);">View it</a> or check "My saved sites."';
     } catch (err){
       statusEl.textContent = 'Could not save: ' + err.message;
     } finally {
@@ -580,7 +596,7 @@
 
       liveGenFrame.srcdoc = generatedHtml;
       liveGenResult.classList.add('show');
-      document.getElementById('saveRow').style.display = 'flex';
+      document.getElementById('saveRow').style.display = 'block';
       document.getElementById('saveStatus').textContent =
         typeof data.remaining === 'number' ? `${data.remaining} free generations left today` : '';
       window._lastGeneratedHtml = generatedHtml;
@@ -591,6 +607,64 @@
     } finally {
       liveGenStatus.classList.remove('show');
       liveGenBtn.disabled = false;
+    }
+  });
+
+  document.getElementById('downloadSiteBtn').addEventListener('click', () => {
+    if (!window._lastGeneratedHtml) return;
+    const nameInput = document.getElementById('siteNameInput');
+    const rawName = nameInput.value.trim() || window._lastGeneratedPrompt || 'site';
+    const filename = rawName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g,'') || 'site';
+    const blob = new Blob([window._lastGeneratedHtml], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename + '.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+  document.getElementById('refineBtn').addEventListener('click', async () => {
+    const refineInput = document.getElementById('refinePrompt');
+    const instruction = refineInput.value.trim();
+    if (!instruction || !window._lastGeneratedHtml) return;
+
+    const rBtn = document.getElementById('refineBtn');
+    rBtn.disabled = true;
+    liveGenStatus.classList.add('show');
+    document.getElementById('liveGenStatusText').textContent = 'Refining your site...';
+    liveGenError.classList.remove('show');
+
+    try {
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: instruction, previous_html: window._lastGeneratedHtml })
+      });
+
+      let responseData;
+      try { responseData = await response.json(); } catch(e){ responseData = {}; }
+
+      if (!response.ok){
+        throw new Error(responseData.error || ('Request failed with status ' + response.status));
+      }
+
+      const newHtml = responseData.html || '';
+      if (!newHtml) throw new Error('No HTML returned from the server.');
+
+      liveGenFrame.srcdoc = newHtml;
+      window._lastGeneratedHtml = newHtml;
+      refineInput.value = '';
+      document.getElementById('saveStatus').textContent =
+        typeof responseData.remaining === 'number' ? `${responseData.remaining} free generations left today` : '';
+    } catch (err){
+      liveGenError.textContent = 'Could not refine your site. ' + err.message;
+      liveGenError.classList.add('show');
+    } finally {
+      liveGenStatus.classList.remove('show');
+      rBtn.disabled = false;
     }
   });
 </script>
