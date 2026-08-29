@@ -8,13 +8,16 @@
   body{ margin:0; background:#0E1614; color:#EAF2EE; font-family:'Inter', sans-serif; }
   .bar{
     background:#16211E; padding:14px 20px; display:flex; justify-content:space-between; align-items:center;
-    border-bottom:1px solid rgba(234,242,238,0.12);
+    border-bottom:1px solid rgba(234,242,238,0.12); gap:10px; flex-wrap:wrap;
   }
   .bar a{ color:#C6FF3D; font-size:13px; text-decoration:none; font-family:monospace; }
+  .bar-actions{ display:flex; gap:8px; }
   .bar button{
     background:transparent; border:1px solid rgba(198,255,61,0.4); color:#C6FF3D;
     font-family:monospace; font-size:12px; padding:7px 12px; border-radius:6px; cursor:pointer;
   }
+  #frame{ width:100%; height:calc(100vh - 52px); border:none; display:block; background:#fff; }
+  #msg{ padding:40px 24px; color:#8FA69C; }
   .badge{
     position:fixed; bottom:16px; right:16px; z-index:50;
     background:#16211E; border:1px solid rgba(234,242,238,0.15); color:#8FA69C;
@@ -22,20 +25,57 @@
     text-decoration:none; display:flex; align-items:center; gap:6px;
   }
   .badge span{ color:#C6FF3D; }
-  #frame{ width:100%; height:calc(100vh - 52px); border:none; display:block; background:#fff; }
-  #msg{ padding:40px 24px; color:#8FA69C; }
 </style>
 </head>
 <body>
   <div class="bar">
     <a href="my-sites.html">&larr; Back to my sites</a>
-    <button id="copyBtn" onclick="copyLink()">Copy link</button>
+    <div class="bar-actions">
+      <button id="downloadBtn" onclick="downloadSite()">Download</button>
+      <button id="copyBtn" onclick="copyLink()">Copy link</button>
+    </div>
   </div>
   <div id="msg">Loading...</div>
   <iframe id="frame" style="display:none;"></iframe>
   <a class="badge" href="index.html">Made with <span>Creator Hub</span></a>
 
   <script>
+    let currentHtml = '';
+    let currentTitle = 'site';
+
+    async function loadSite(){
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get('id');
+      const slug = params.get('s');
+      const msgEl = document.getElementById('msg');
+      const frameEl = document.getElementById('frame');
+
+      if (!id && !slug){
+        msgEl.textContent = 'No site specified.';
+        return;
+      }
+
+      try {
+        const qs = slug ? ('slug=' + encodeURIComponent(slug)) : ('id=' + encodeURIComponent(id));
+        const response = await fetch('/api/get-site?' + qs);
+        const data = await response.json();
+
+        if (!response.ok){
+          msgEl.textContent = 'Could not load this site: ' + (data.error || 'unknown error');
+          return;
+        }
+
+        currentHtml = data.site.html;
+        currentTitle = data.site.title || 'site';
+        document.title = currentTitle + ' — Creator Hub';
+        frameEl.srcdoc = currentHtml;
+        frameEl.style.display = 'block';
+        msgEl.style.display = 'none';
+      } catch (err){
+        msgEl.textContent = 'Could not load this site: ' + err.message;
+      }
+    }
+
     function copyLink(){
       navigator.clipboard.writeText(window.location.href).then(() => {
         const btn = document.getElementById('copyBtn');
@@ -44,37 +84,21 @@
         setTimeout(() => { btn.textContent = original; }, 1500);
       });
     }
-  </script>
 
-  <script>
-    async function loadSite(){
-      const params = new URLSearchParams(window.location.search);
-      const id = params.get('id');
-      const msgEl = document.getElementById('msg');
-      const frameEl = document.getElementById('frame');
-
-      if (!id){
-        msgEl.textContent = 'No site ID given.';
-        return;
-      }
-
-      try {
-        const response = await fetch('/api/get-site?id=' + encodeURIComponent(id));
-        const data = await response.json();
-
-        if (!response.ok){
-          msgEl.textContent = 'Could not load this site: ' + (data.error || 'unknown error');
-          return;
-        }
-
-        document.title = (data.site.title || 'Saved site') + ' — Creator Hub';
-        frameEl.srcdoc = data.site.html;
-        frameEl.style.display = 'block';
-        msgEl.style.display = 'none';
-      } catch (err){
-        msgEl.textContent = 'Could not load this site: ' + err.message;
-      }
+    function downloadSite(){
+      if (!currentHtml) return;
+      const blob = new Blob([currentHtml], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const filename = currentTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g,'') || 'site';
+      a.download = filename + '.html';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     }
+
     loadSite();
   </script>
 </body>
