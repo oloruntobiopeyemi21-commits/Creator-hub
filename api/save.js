@@ -1,3 +1,5 @@
+import crypto from 'crypto';
+
 function slugify(text) {
   return (text || 'site')
     .toLowerCase()
@@ -31,13 +33,48 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { prompt, html, title, anon_id } = req.body;
+  const { prompt, html, title, anon_id, token } = req.body;
 
   if (!html || !anon_id) {
     return res.status(400).json({ error: 'Missing html or anon_id' });
   }
 
+  if (!token) {
+    return res.status(403).json({ error: 'Missing proof token. Sites can only be saved right after generating them here.' });
+  }
+
+  if (html.length > 300000) {
+    return res.status(413).json({ error: 'Site content is too large to save.' });
+  }
+
   try {
+    // ---- Verify this HTML genuinely came from our own generator ----
+    const htmlHash = crypto.createHash('sha256').update(html).digest('hex');
+    const tokenUrl = `${process.env.SUPABASE_URL}/rest/v1/generation_tokens?token=eq.${encodeURIComponent(token)}&select=token,html_hash,used`;
+    const tokenResponse = await fetch(tokenUrl, {
+      headers: {
+        'apikey': process.env.SUPABASE_SERVICE_KEY,
+        'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_KEY}`
+      }
+    });
+    const tokenRows = await tokenResponse.json();
+    const tokenRow = Array.isArray(tokenRows) ? tokenRows[0] : null;
+
+    if (!tokenRow || tokenRow.used || tokenRow.html_hash !== htmlHash) {
+      return res.status(403).json({ error: 'This content could not be verified as coming from Creator Hub\'s generator.' });
+    }
+
+    // ---- Mark token as used so it can't be replayed ----
+    await fetch(`${process.env.SUPABASE_URL}/rest/v1/generation_tokens?token=eq.${encodeURIComponent(token)}`, {
+      method: 'PATCH',
+      headers: {
+        'apikey': process.env.SUPABASE_SERVICE_KEY,
+        'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ used: true })
+    });
+
     const finalTitle = (title || prompt || 'Untitled site').slice(0, 80);
     const baseSlug = slugify(title || prompt || 'site');
     const slug = await findUniqueSlug(baseSlug);
@@ -70,4 +107,3 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: error.message });
   }
 }
-
