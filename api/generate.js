@@ -11,6 +11,25 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Missing prompt' });
   }
 
+  // ---- Basic acceptable-use filter (defense in depth, not exhaustive) ----
+  const blockedPatterns = [
+    /phish/i,
+    /steal\s+(password|credential|login|credit\s*card)/i,
+    /fake\s+(bank|paypal|login)\s+(page|site)/i,
+    /keylogger/i,
+    /\b(malware|ransomware|virus)\b.{0,20}(code|script|generate|create|build)/i,
+    /how\s+to\s+make\s+(a\s+)?(bomb|explosive|weapon)/i,
+    /child\s*(sexual|porn|exploitation)/i,
+    /\bcsam\b/i,
+    /credit\s*card\s*(number\s*)?generator/i
+  ];
+  const combinedText = prompt + ' ' + (previous_html ? '' : '');
+  if (blockedPatterns.some(p => p.test(combinedText))) {
+    return res.status(400).json({
+      error: 'This request can\'t be generated — it may violate our Acceptable Use policy. See terms.html for details.'
+    });
+  }
+
   const ip = (req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown').split(',')[0].trim();
   const DAILY_LIMIT = 10;
 
